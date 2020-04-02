@@ -1,0 +1,36 @@
+---
+keepalived_version: 2.0.20
+keepalived_options: "-D"
+keepalived_global_defs:
+  notification_email: []
+  # - aaaa@example.com
+  # - bbbb@example.com
+  # - cccc@example.com
+  notification_email_from: ""
+  smtp_server: ""
+  smtp_connect_timeout: 10
+  router_id: xxxxx
+keepalived_vrrp_scripts: []
+# - name: chk_proxysql
+#   script: "killall -0 proxysql"
+keepalived_vrrp_instances: []
+# - name: VI_1
+#   state: MASTER
+#   interface: eth0
+#   virtual_router_id: 50
+#   priority: 100
+#   advert_int: 1
+#   track_script:
+#     - chk_proxysql
+#   authentication:
+#     type: PASS
+#     pass: 1111
+#   virtual_ipaddress:
+#     - 10.0.0.1/24
+keepalived_virtual_servers: []
+# - server: 192.168.1.100
+#   port: 80
+#   protocol: TCP
+#   real_servers:
+#     - server: 192.168.1.10
+#       port: 80

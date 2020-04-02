@@ -1,0 +1,122 @@
+---
+- name: Ensure keepalived group exists
+  group:
+    name: keepalived
+    system: true
+    state: present
+
+- name: Ensure keepalived user exists
+  user:
+    name: keepalived
+    system: true
+    create_home: false
+    group: keepalived
+    shell: /sbin/nologin
+    state: present
+
+- name: Enable PowerTools repository for Centos8
+  ini_file:
+    path: /etc/yum.repos.d/CentOS-PowerTools.repo
+    section: PowerTools
+    option: enabled
+    value: "1"
+    mode: "0644"
+    state: present
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
+    - ansible_facts['distribution_major_version'] == '8'
+
+- name: Install dependencies
+  yum:
+    name: "{{ deps }}"
+    update_cache: true
+    state: present
+  vars:
+    deps:
+      - gcc
+      - autoconf
+      - automake
+      - make
+      - psmisc
+      - openssl-devel
+      - libnl3-devel
+      - ipset-devel
+      - iptables-devel
+      # - pcre2-devel
+      - libnl3-devel
+      - file-devel
+      - net-snmp-devel
+      - glib2-devel
+      # - json-c-devel
+      - libmnl-devel
+
+- name: Ensure keepalived runtime && log directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: keepalived
+    group: keepalived
+    recurse: true
+  loop:
+    - /var/run/keepalived
+    - /var/log/keepalived
+
+- name: Download keepalived package
+  get_url:
+    url: https://www.keepalived.org/software/keepalived-{{ keepalived_version }}.tar.gz
+    dest: "{{ role_path }}/files/keepalived-{{ keepalived_version }}.tar.gz"
+    timeout: 120
+    force: false
+  delegate_to: localhost
+  become: false
+
+- name: Unarchive to targer machine
+  unarchive:
+    src: keepalived-{{ keepalived_version }}.tar.gz
+    dest: /usr/local/src/
+    creates: /usr/local/src/keepalived-{{ keepalived_version }}
+    remote_src: false
+  register: _unarchive_status
+
+- name: Compile && Install
+  command: "{{ item }}"
+  args:
+    chdir: /usr/local/src/keepalived-{{ keepalived_version }}
+    warn: false
+  loop:
+    - ./configure --prefix=/usr/local/keepalived # --enable-regex --enable-json
+    - make -j
+    - make install
+  when:
+    - _unarchive_status is changed
+  tags:
+    - skip_ansible_lint
+
+- name: Generate keepalived.conf
+  template:
+    src: keepalived.conf.j2
+    dest: /usr/local/keepalived/etc/keepalived/keepalived.conf
+    lstrip_blocks: True
+    owner: keepalived
+    group: keepalived
+    mode: 0640
+    validate: /usr/local/keepalived/sbin/keepalived -t -f %s
+  notify:
+    - restart keepalived
+
+- name: Generate sysconfig
+  template:
+    src: keepalived.sysconfig.j2
+    dest: /usr/local/keepalived/etc/sysconfig/keepalived
+    owner: keepalived
+    group: keepalived
+    mode: 0644
+  notify:
+    - restart keepalived
+
+- name: Startup for systemd
+  template:
+    src: keepalived.service.j2
+    dest: /usr/lib/systemd/system/keepalived.service
+  notify:
+    - restart keepalived

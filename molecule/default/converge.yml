@@ -1,0 +1,26 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include daixijun.keepalived"
+      include_role:
+        name: "daixijun.keepalived"
+      vars:
+        keepalived_version: 2.0.20
+        keepalived_vrrp_scripts:
+          - name: chk_systemd
+            script: "/usr/bin/killall -0 systemd"
+            weight: -10
+        keepalived_vrrp_instances:
+          - name: VI_SYSTEMD
+            state: BACKUP
+            interface: eth0
+            virtual_router_id: 50
+            advert_int: 1
+            track_script:
+              - chk_systemd
+            authentication:
+              type: PASS
+              pass: 1111
+            virtual_ipaddress:
+              - 172.17.0.100/24

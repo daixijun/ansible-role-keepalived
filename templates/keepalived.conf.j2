@@ -1,0 +1,98 @@
+! {{ ansible_managed }}
+! Configuration File for keepalived
+
+use_pid_dir
+
+global_defs {
+    {% if keepalived_global_defs.notification_email|length > 0 %}
+    notification_email {
+        {% for email in keepalived_global_defs.notification_email %}
+        {{ email }}
+        {% endfor %}
+    }
+    notification_email_from {{ keepalived_global_defs.notification_email_from | default('keepalived@localhost') }}
+    smtp_server {{ keepalived_global_defs.smtp_server | default('127.0.0.1') }}
+    smtp_connect_timeout {{ keepalived_global_defs.smtp_connect_timeout | default(10) }}
+    {% endif %}
+    router_id {{ keepalived_global_defs.router_id | default(inventory_hostname) }}
+    script_user root
+    enable_script_security
+    ! vrrp_skip_check_adv_addr
+    ! vrrp_strict
+    ! vrrp_garp_interval 0
+    ! vrrp_gna_interval 0
+}
+
+{% if keepalived_vrrp_scripts %}
+{% for script in keepalived_vrrp_scripts %}
+vrrp_script {{ script.name }} {
+    script {{ script.script | quote }}
+    interval {{ script.interval | default(1) }}
+    weight {{ script.weight | default(0) }}
+    rise {{ script.rise | default(1) }}
+    fall {{ script.fall | default(2) }}
+}
+
+{% endfor %}
+{% endif %}
+{% if keepalived_vrrp_instances %}
+{% for instance in keepalived_vrrp_instances %}
+vrrp_instance {{ instance.name }} {
+    state {{ instance.state|default('BACKUP') }}
+    interface {{ instance.interface | default(ansible_default_ipv4.interface) }}
+    virtual_router_id {{ instance.virtual_router_id | default(51) }}
+    priority {{ instance.priority | default(100) - ansible_play_hosts.index(inventory_hostname) }}
+    advert_int {{ instance.advert_int | default(1) }}
+    nopreempt
+    mcast_src_ip {{ ansible_default_ipv4.address }}
+
+    {% if instance.authentication %}
+    authentication {
+        auth_type {{ instance.authentication.type | default('PASS') }}
+        auth_pass {{ instance.authentication.pass | default('123') }}
+    }
+    {% endif %}
+
+    {% if instance.track_script %}
+    track_script {
+    {% for script in instance.track_script %}
+        {{ script }}
+    }
+    {% endfor %}
+    {% endif %}
+
+    {% if instance.virtual_ipaddress|length > 0 %}
+    virtual_ipaddress {
+        {% for ipaddress in instance.virtual_ipaddress %}
+        {{ ipaddress }}
+        {% endfor %}
+    }
+    {% endif %}
+}
+
+{% endfor %}
+{% endif %}
+{% if keepalived_virtual_servers %}
+{% for vs in keepalived_virtual_servers %}
+virtual_server {{ vs.ipaddr }} {{ vs.port }} {
+    delay_loop 2
+    lb_algo rr
+    lb_kind NAT
+    persistence_timeout 50
+    protocol {{ vs.protocol | default('TCP') }}
+
+    {% if vs.real_servers %}
+    {% for rs in vs.real_servers %}
+    real_server {{ rs.ipaddr }} {{ rs.port }} {
+        weight {{ rs.weight | default(1) }}
+        TCP_CHECK {
+            connect_timeout 3
+            retry 3
+            delay_loop 2
+        }
+    }
+    {% endfor %}
+    {% endif %}
+}
+{% endfor %}
+{% endif %}

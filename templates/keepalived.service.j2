@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+[Unit]
+Description=LVS and VRRP High Availability Monitor
+After=syslog.target network-online.target
+
+[Service]
+Type=forking
+PIDFile=/var/run/keepalived/keepalived.pid
+KillMode=process
+EnvironmentFile=-/usr/local/keepalived/etc/sysconfig/keepalived
+ExecStart=/usr/local/keepalived/sbin/keepalived -D -f /usr/local/keepalived/etc/keepalived/keepalived.conf
+ExecReload=/bin/kill -HUP $MAINPID
+User=keepalived
+Group=keepalived
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BROADCAST CAP_NET_RAW CAP_KILL
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BROADCAST CAP_NET_RAW CAP_KILL
+
+[Install]
+WantedBy=multi-user.target
