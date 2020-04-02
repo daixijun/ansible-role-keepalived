@@ -23,7 +23,7 @@ jobs:
       - name: Test with molecule
         run: |
           cd ..
-          ln -sf ansible-role-mysql daixijun.mysql
+          cp -rf ansible-role-mysql daixijun.mysql
           cd daixijun.mysql
           MOLECULE_DISTRO=${{ matrix.distro }} molecule test --scenario-name ${{ matrix.scenario }}
       - name: Publish role to Galaxy
