@@ -23,8 +23,8 @@ jobs:
       - name: Test with molecule
         run: |
           cd ..
-          cp -rf ansible-role-mysql daixijun.mysql
-          cd daixijun.mysql
+          ln -sf ansible-role-keepalived daixijun.keepalived
+          cd daixijun.keepalived
           MOLECULE_DISTRO=${{ matrix.distro }} molecule test --scenario-name ${{ matrix.scenario }}
       - name: Publish role to Galaxy
         if: success()
