@@ -9,7 +9,7 @@ keepalived_global_defs:
   notification_email_from: ""
   smtp_server: ""
   smtp_connect_timeout: 10
-  router_id: xxxxx
+  # router_id: keepalived
 keepalived_vrrp_scripts: []
 # - name: chk_proxysql
 #   script: "killall -0 proxysql"
