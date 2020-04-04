@@ -64,11 +64,12 @@
 - name: Download keepalived package
   get_url:
     url: https://www.keepalived.org/software/keepalived-{{ keepalived_version }}.tar.gz
-    dest: "{{ role_path }}/files/keepalived-{{ keepalived_version }}.tar.gz"
+    dest: "{{ playbook_dir }}/files/keepalived-{{ keepalived_version }}.tar.gz"
     timeout: 120
     force: false
   delegate_to: localhost
   become: false
+  run_once: True
 
 - name: Unarchive to targer machine
   unarchive:
