@@ -1,9 +1,6 @@
 ---
-# This is an example playbook to execute Ansible tests.
-
 - name: Verify
   hosts: all
   tasks:
-  - name: Example assertion
-    assert:
-      that: true
+    - name: Test to ping vip
+      command: ping -t 1 -c 1 172.17.0.100

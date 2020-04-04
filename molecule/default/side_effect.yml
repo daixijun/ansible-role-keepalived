@@ -1,0 +1,9 @@
+---
+- name: Side Effect
+  hosts: keepalived1
+  gather_facts: False
+  tasks:
+    - name: Remove keepalived check file
+      file:
+        path: /tmp/keepalived_test_check.txt
+        state: absent

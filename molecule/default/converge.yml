@@ -8,17 +8,17 @@
       vars:
         keepalived_version: 2.0.20
         keepalived_vrrp_scripts:
-          - name: chk_systemd
-            script: "/usr/bin/killall -0 systemd"
+          - name: chk_check_file
+            script: "/usr/bin/test -f /tmp/keepalived_test_check.txt"
             weight: -10
         keepalived_vrrp_instances:
-          - name: VI_SYSTEMD
+          - name: VI_CHECK_FILE
             state: BACKUP
             interface: eth0
             virtual_router_id: 50
             advert_int: 1
             track_script:
-              - chk_systemd
+              - chk_check_file
             authentication:
               type: PASS
               pass: 1111
