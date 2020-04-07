@@ -88,6 +88,7 @@
     - ./configure --prefix=/usr/local/keepalived # --enable-regex --enable-json
     - make -j
     - make install
+    - chown -R keepalived:keepalived /usr/local/keepalived
   when:
     - _unarchive_status is changed
   tags:
