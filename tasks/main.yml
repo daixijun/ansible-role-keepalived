@@ -1,19 +1,4 @@
 ---
-- name: Ensure keepalived group exists
-  group:
-    name: keepalived
-    system: true
-    state: present
-
-- name: Ensure keepalived user exists
-  user:
-    name: keepalived
-    system: true
-    create_home: false
-    group: keepalived
-    shell: /sbin/nologin
-    state: present
-
 - name: Enable PowerTools repository for Centos8
   ini_file:
     path: /etc/yum.repos.d/CentOS-PowerTools.repo
@@ -54,8 +39,6 @@
   file:
     path: "{{ item }}"
     state: directory
-    owner: keepalived
-    group: keepalived
     recurse: true
   loop:
     - /var/run/keepalived
@@ -88,7 +71,6 @@
     - ./configure --prefix=/usr/local/keepalived # --enable-regex --enable-json
     - make -j
     - make install
-    - chown -R keepalived:keepalived /usr/local/keepalived
   when:
     - _unarchive_status is changed
   tags:
@@ -99,8 +81,6 @@
     src: keepalived.conf.j2
     dest: /usr/local/keepalived/etc/keepalived/keepalived.conf
     lstrip_blocks: True
-    owner: keepalived
-    group: keepalived
     mode: 0640
     validate: /usr/local/keepalived/sbin/keepalived -t -f %s
   notify:
@@ -110,8 +90,6 @@
   template:
     src: keepalived.sysconfig.j2
     dest: /usr/local/keepalived/etc/sysconfig/keepalived
-    owner: keepalived
-    group: keepalived
     mode: 0644
   notify:
     - restart keepalived
